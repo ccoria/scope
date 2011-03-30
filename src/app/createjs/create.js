@@ -1,5 +1,5 @@
-framework.create = function (name, _class_function) {
-    gs[name] = function () {
+createjs.create = function (name, _class_function) {
+    this[name] = function () {
 	    var context = {}
         context.public = {};
         context.events = {};

@@ -40,6 +40,8 @@ scope.function_helper = (function() {
 	    has_own_function,
 	    has_own_object, 
 	    merge_all_objects,
+	    functional,
+	    contextualize,
 	    object_merge;
 	
 	arguments_push = function (arguments_ref, new_value) {
@@ -63,13 +65,12 @@ scope.function_helper = (function() {
 		        && object.hasOwnProperty(key));
 	};
 	
-	filter = function (object, func) {
-		var result = {};
-		for (var name in object) {
-			if (func(object[name], object, name))
-			   result[name] = object[name];
-		}
-		return result;
+	contextualize = function (raw_function, new_context) {
+		var new_function = function () {
+			return raw_function.apply(new_context, arguments);
+		};
+		
+		return new_function;
 	};
 	
 	// TODO: remove side effect
@@ -79,16 +80,46 @@ scope.function_helper = (function() {
 			
 			if (has_own_function(obj_functions_owner, property_name)) {
 				
-				var original_func = obj_functions_owner[property_name];
-				obj_functions_owner[property_name] = function () {
-					var _args = arguments_push(arguments, new_context);
+				var original = obj_functions_owner[property_name];
+				obj_functions_owner[property_name] = contextualize(original, new_context);
 
-					return original_func.apply(new_context, arguments);
-				};
 			} else if (has_own_object(obj_functions_owner, property_name)) {
 				apply_context_in_batch(obj_functions_owner[property_name], property_name);
 			}
 		}
+	};
+	
+	functional = function (object, args) {
+		
+		// fallback function for filter
+		var no_filter_func = function () { 
+			return true; 
+		};
+		
+		//fallback function for map
+		var no_map_func = function (value) {
+			return value;	
+		};
+		
+		var get_function = function (arg_name, fallback_function) {
+			if (typeof args[arg_name] === "function")
+			    return args[arg_name];
+			else
+			    return fallback_function;
+		}
+		
+		var filter = get_function('filter', no_filter_func);
+		var map = get_function('map', no_map_func);
+		
+		var result = {};
+		
+		for (var prop in object) {
+			if (filter(object[prop], object, prop)) {
+			    result[prop] = map(object[prop]);
+			}
+		}
+		
+		return result;
 	};
 	
 	object_merge = function (object1, object2) {
@@ -102,8 +133,10 @@ scope.function_helper = (function() {
 	};
 	
 	merge_all_objects = function (object) {
-		var only_objects = filter(object, function (value, obj, key) {
-			return has_own_object(obj, key);
+		var only_objects = functional(object, {
+			filter: function (value, obj, key) {
+			    return has_own_object(obj, key);
+			}
 		});
 		
 		var result = {}
@@ -120,6 +153,8 @@ scope.function_helper = (function() {
         has_own_object: has_own_object,
         apply_context_in_batch: apply_context_in_batch,
         merge_all_objects: merge_all_objects,
+        functional: functional,
+        contextualize: contextualize,
         object_merge: object_merge
     }
 

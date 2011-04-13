@@ -36,6 +36,7 @@ describe('scope create', function () {
     });
     
   	it('should handle events', function () {
+	    var evt_fired = false;
         var mynamespace = scope.init();
    
         mynamespace.create('myclass', function () {
@@ -46,27 +47,26 @@ describe('scope create', function () {
         });
    
         var myinstance = mynamespace.myclass(); 
-        var evt_fired = false;
         myinstance.on('my_event', function () {
             evt_fired = true;
         });
         myinstance.my_method();
 
-        expect(evt_fired).toBe(true);
+        expect(evt_fired).toBeTruthy();
     });
 
     it('should should call the constructor', function () {
 	    var constructor_called = false;
         var mynamespace = scope.init();
-        mynamespace.create('myclass', function (any_param) {
+        mynamespace.create('myclass', function (	) {
 	        
 	        this.init = function () {
 		        constructor_called = true;
 	        }
         });
     
-        var myinstance = mynamespace.myclass("cass");
-        expect(constructor_called).toBe(true);
+        var myinstance = mynamespace.myclass();
+        expect(constructor_called).toBeTruthy();
     });
 
     it('should should be able to access properties from constructor', function () {
@@ -89,7 +89,7 @@ describe('scope create', function () {
         });
     
         var myinstance = mynamespace.myclass("cass");
-        expect(constructor_called).toBe(true);
+        expect(constructor_called).toBeTruthy();
     });
 
   	it('should should be able to call private properties or method from "this" inside public functions', function () {

@@ -70,6 +70,8 @@ describe('function_helper tests', function () {
 		}
 		
 		var helper = scope.function_helper;
+		
+		//doing the filter
 		var new_obj = helper.functional(myobj, {
 			filter: function (val) { return (typeof val === "function") }
 		});
@@ -139,6 +141,27 @@ describe('function_helper tests', function () {
 		expect(strings.prop2).toBe("2");
 		expect(strings.prop3).toBe("3");
 		expect(strings.prop4).toBe("4");
+	});
+	
+	it('should filter and map', function () {
+		
+		var myobj = {
+			prop1: 1,
+			prop2: 2,
+			prop3: 3,
+			prop4: 4
+		}
+		
+		var helper = scope.function_helper;
+		var strings = helper.functional(myobj, {
+			filter: function (val) { return (val > 1 && val < 4); },
+			map: function (val) { return (val + "") }
+		});
+
+		expect(strings.prop1).toBeUndefined();
+		expect(strings.prop2).toBe("2");
+		expect(strings.prop3).toBe("3");
+		expect(strings.prop4).toBeUndefined();
 	});
 	
 	it('should change the context of a function', function () {

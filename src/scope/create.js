@@ -6,26 +6,58 @@ scope.create = function (name, _class_function) {
 	    var interface = {};
         interface.public = {};
         interface.private = {};
-        interface.events = {};
+	    
+	    // TODO: extract this
+	    interface.events = {
+		
+		    // returns a function that fires an event
+		    get_event_trigger: function () {
+			    return function (event_name, data) {
+		            interface.events[event_name](data);
+		        }
+		    },
+		    
+		   // returns a function that listen an event
+		    get_event_listener: function () {
+			    return function (event_name, handler) {
+		            interface.events[event_name] = function (data) {
+		               handler(data);
+		            };
+		        };
+		    }
+	    };
 
-        interface.private.fire = function (event_name, data) {
-            interface.events[event_name](data);
-        };
+        // setting the event trigger
+        interface.private.fire = interface.events.get_event_trigger();
 
-        interface.public.on = function (event_name, handler) {
-            interface.events[event_name] = function (data) {
-               handler(data);
-            };
-        };
-    
+        // calling the user defined function
         _class_function.apply(interface, arguments);
+
+        // ----------------
+        // changing contexts
 
         var all_properties = helper.merge_all_objects(interface);
 
-        //TODO: refactor this!
-        helper.apply_context_in_batch(interface.public, all_properties, "on");
-        helper.apply_context_in_batch(interface.private, all_properties);
+        var commom_map = function (val) {
+	        var is_function = (typeof val === 'function');
+	        return ( is_function ? helper.contextualize(val, all_properties) : val)
+        };
 
+        interface.private = helper.functional(interface.public, {
+	        map: function (val) { return commom_map(val); }
+        });
+
+        interface.public = helper.functional(interface.public, {
+	        filter: function (val, object, key) { return (key !== 'on') },
+	        map: function (val) { return commom_map(val); }
+        });
+        
+        // -----------------
+ 
+        // setting the event listener
+		interface.public.on = interface.events.get_event_listener();
+
+        // Calling constructor, if it is defined
         if (typeof interface.init === "function") { 
             interface.init.apply(all_properties);
         }
@@ -115,7 +147,7 @@ scope.function_helper = (function() {
 		
 		for (var prop in object) {
 			if (filter(object[prop], object, prop)) {
-			    result[prop] = map(object[prop]);
+			    result[prop] = map(object[prop], object, prop);
 			}
 		}
 		

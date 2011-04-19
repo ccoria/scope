@@ -143,6 +143,26 @@ describe('function_helper tests', function () {
 		expect(strings.prop4).toBe("4");
 	});
 	
+	it('should map using object and key', function () {
+		
+		var myobj = {
+			prop1: 1,
+			prop2: 2,
+			prop3: 3,
+			prop4: 4
+		}
+		
+		var helper = scope.function_helper;
+		var strings = helper.functional(myobj, {
+			map: function (val, object, key) { return (object[key] > 2 ? val : key) }
+		});
+
+		expect(strings.prop1).toBe("prop1");
+		expect(strings.prop2).toBe("prop2");
+		expect(strings.prop3).toBe(3);
+		expect(strings.prop4).toBe(4);
+	});
+	
 	it('should filter and map', function () {
 		
 		var myobj = {
@@ -202,4 +222,5 @@ describe('function_helper tests', function () {
 		expect(hash.level2_2).toBe("value level2_2");
 		expect(hash.level2_3).toBe("value level2_3");
 	});
+	
 });
